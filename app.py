@@ -1,22 +1,27 @@
-import streamlit as st
+import gradio as gr
 import joblib
 
+# Load models
 vectorizer = joblib.load("vectorizer.jb")
 model = joblib.load("lr_model.jb")
 
-st.title("Fake News Detector")
-st.write("Enter a News Article below to check whether it is Fake or Real. ")
+def predict_news(text):
+    if not text.strip():
+        return "⚠️ Please enter some text to analyze!"
+    
+    # Transform and predict
+    transformed_text = vectorizer.transform([text])
+    prediction = model.predict(transformed_text)
+    
+    return "✅ The News is Real!" if prediction[0] == 1 else "❌ The News is Fake!"
 
-inputn = st.text_area("News Article:","")
+# Gradio interface
+interface = gr.Interface(
+    fn=predict_news,
+    inputs=gr.Textbox(label="Paste News Article", placeholder="Enter text here..."),
+    outputs="text",
+    title="Fake News Detector",
+    description="Enter a news article to check if it's fake or real."
+)
 
-if st.button("Check News"):
-    if inputn.strip():
-        transform_input = vectorizer.transform([inputn])
-        prediction = model.predict(transform_input)
-
-        if prediction[0] == 1:
-            st.success("The News is Real! ")
-        else:
-            st.error("The News is Fake! ")
-    else:
-        st.warning("Please enter some text to Analyze. ") 
+interface.launch()
